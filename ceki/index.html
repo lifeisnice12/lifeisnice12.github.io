@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Qui est-ce ? – Quiz des élèves</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#3d5afe">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6b66;--ac:#3d5afe;--ok:#1f9d55;--ko:#d64545;--bd:#e3e1da;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--card:#222226;--tx:#f0efea;--mut:#9a9a94;--ac:#7c8cff;--ok:#43c47a;--ko:#ff6b6b;--bd:#37373c}}
+:root[data-theme="dark"]{--bg:#17171a;--card:#222226;--tx:#f0efea;--mut:#9a9a94;--ac:#7c8cff;--ok:#43c47a;--ko:#ff6b6b;--bd:#37373c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.4}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:8px 0 12px}
+nav{display:flex;gap:8px;margin-bottom:16px}
+nav button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font-size:1rem;cursor:pointer}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text]{flex:1;min-width:140px;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font-size:1rem}
+.btn{padding:10px 14px;border:0;border-radius:8px;background:var(--ac);color:#fff;font-size:1rem;cursor:pointer}
+.btn.sec{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.mut{color:var(--mut);font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.st{background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;position:relative}
+.st img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.st input{width:100%;border:0;border-top:1px solid var(--bd);padding:8px;background:transparent;color:var(--tx);font-size:.9rem}
+.st .x{position:absolute;top:4px;right:4px;border:0;border-radius:50%;width:26px;height:26px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer}
+.photo{display:block;margin:0 auto 14px;width:min(320px,100%);aspect-ratio:1;object-fit:cover;border-radius:14px}
+.choices{display:grid;gap:10px}
+.choices button{padding:14px;font-size:1.05rem;border:2px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:10px;cursor:pointer}
+.choices button.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 20%,transparent)}
+.choices button.ko{border-color:var(--ko);background:color-mix(in srgb,var(--ko) 20%,transparent)}
+.score{display:flex;justify-content:space-between;margin-bottom:10px;font-weight:600}
+.msg{text-align:center;font-weight:600;min-height:1.5em;margin:12px 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 10px);background:var(--ac);color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:5}
+.hide{display:none}
+.st .x2{position:absolute;top:4px;right:4px;border:0;border-radius:50%;width:26px;height:26px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="toast" id="toast">C’est l’heure de réviser !</div>
+<main>
+<h1>📸 Qui est-ce ?</h1>
+<nav><button id="tabL" class="on">Élèves</button><button id="tabQ">Quiz</button></nav>
+
+<section id="vL">
+  <div class="card">
+    <strong>Importer un PDF</strong>
+    <p class="mut">Un PDF contenant les photos avec le nom de chaque élève à côté (trombinoscope, page de classe…). L’application repère les photos et les noms ; vous vérifiez avant d’ajouter.</p>
+    <input type="file" id="pdf" accept="application/pdf">
+    <div class="mut" id="pst" style="margin-top:8px"></div>
+  </div>
+  <div class="card hide" id="rev">
+    <strong id="rt"></strong>
+    <p class="mut">Corrigez les noms si besoin et supprimez les images en trop avec ×.</p>
+    <div class="grid" id="rg"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="rok">Ajouter à la liste</button><button class="btn sec" id="rno">Annuler</button></div>
+  </div>
+  <div class="card">
+    <strong>Importer des photos</strong>
+    <p class="mut">Choisissez plusieurs photos à la fois : le nom du fichier devient le nom de l’élève (ex. « Marie Dupont.jpg »). Vous pourrez corriger les noms ensuite.</p>
+    <input type="file" id="files" accept="image/*" multiple>
+  </div>
+  <div class="card">
+    <strong>Ajouter un élève</strong>
+    <div class="row" style="margin-top:8px">
+      <input type="text" id="nm" placeholder="Nom de l’élève">
+      <input type="file" id="ph" accept="image/*">
+      <button class="btn" id="add">Ajouter</button>
+    </div>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <span class="mut" id="count"></span>
+    <button class="btn sec" id="clear">Tout effacer</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section id="vQ" class="hide">
+  <div class="card">
+    <div class="score"><span>✅ <span id="sOk">0</span></span><span>❌ <span id="sKo">0</span></span></div>
+    <div id="qBox"></div>
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="next" style="width:100%" hidden>Suivant</button>
+  </div>
+  <div class="card">
+    <label class="row"><input type="checkbox" id="auto"> Me poser une question automatiquement toutes les
+      <select id="iv"><option value="1">1</option><option value="5" selected>5</option><option value="10">10</option><option value="30">30</option></select> min</label>
+    <p class="mut" style="margin:8px 0 0">Fonctionne tant que cette page reste ouverte. Les élèves ratés reviennent plus souvent.</p>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+  var KEY="eleves-v1", S=[], sc={ok:0,ko:0}, cur=null, last=null, timer=null;
+  var $=function(id){return document.getElementById(id)};
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function load(){try{S=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){S=[]}}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+  function resize(file){return new Promise(function(res,rej){
+    var u=URL.createObjectURL(file), im=new Image();
+    im.onload=function(){
+      var m=320,r=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");
+      c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.82));
+    };
+    im.onerror=function(){rej()};im.src=u;
+  })}
+  function nameOf(f){return f.name.replace(/\.[^.]+$/,"").replace(/[_\-]+/g," ").trim()}
+
+  function renderList(){
+    var g=$("grid");g.innerHTML="";
+    S.forEach(function(s){
+      var d=document.createElement("div");d.className="st";
+      var im=document.createElement("img");im.src=s.img;im.alt=s.name;
+      var inp=document.createElement("input");inp.type="text";inp.value=s.name;
+      inp.onchange=function(){s.name=inp.value.trim()||s.name;save()};
+      var x=document.createElement("button");x.className="x";x.textContent="×";x.title="Supprimer";
+      x.onclick=function(){S=S.filter(function(t){return t.id!==s.id});save();renderList()};
+      d.append(im,inp,x);g.appendChild(d);
+    });
+    $("count").textContent=S.length+" élève"+(S.length>1?"s":"")+(S.length<3?" — il en faut au moins 3 pour le quiz":"");
+  }
+
+  /* ---- Import PDF ---- */
+  var PB="./lib/pdfjs/",pdfReady=null,cand=[];
+  function loadScript(u){return new Promise(function(res,rej){var s=document.createElement("script");s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+  function pdfLib(){
+    if(!pdfReady)pdfReady=loadScript(PB+"pdf.min.js").then(function(){return loadScript(PB+"pdf.worker.min.js")}).then(function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc=PB+"pdf.worker.min.js";return window.pdfjsLib}).catch(function(x){pdfReady=null;throw x});
+    return pdfReady;
+  }
+  function boxes(ops,vp,U,OPS){
+    var ctm=[1,0,0,1,0,0],st=[],out=[];
+    for(var i=0;i<ops.fnArray.length;i++){
+      var f=ops.fnArray[i],a=ops.argsArray[i];
+      if(f===OPS.save)st.push(ctm.slice());
+      else if(f===OPS.restore)ctm=st.pop()||[1,0,0,1,0,0];
+      else if(f===OPS.transform)ctm=U.transform(ctm,a);
+      else if(f===OPS.paintFormXObjectBegin){st.push(ctm.slice());if(a[0])ctm=U.transform(ctm,a[0])}
+      else if(f===OPS.paintFormXObjectEnd){ctm=st.pop()||ctm}
+      else if(f===OPS.paintImageXObject||f===OPS.paintInlineImageXObject){
+        var m=U.transform(vp.transform,ctm),xs=[],ys=[];
+        [[0,0],[1,0],[0,1],[1,1]].forEach(function(p){var q=U.applyTransform(p,m);xs.push(q[0]);ys.push(q[1])});
+        out.push({x0:Math.min.apply(null,xs),x1:Math.max.apply(null,xs),y0:Math.min.apply(null,ys),y1:Math.max.apply(null,ys)});
+      }
+    }
+    return out;
+  }
+  function lineText(a){return a.sort(function(p,q){return p.x-q.x}).map(function(t){return t.s.trim()}).join(" ").replace(/\s+/g," ").trim()}
+  function nameFor(b,T){
+    var bw=b.x1-b.x0;
+    var col=T.filter(function(t){var c=t.x+t.w/2;return c>=b.x0-bw*.15&&c<=b.x1+bw*.15&&t.top>=b.y1-8}).sort(function(p,q){return p.bot-q.bot});
+    if(col.length&&col[0].top-b.y1<bw*.6){
+      var f=col[0],out=lineText(col.filter(function(t){return Math.abs(t.bot-f.bot)<t.h*.5}));
+      var rest=col.filter(function(t){return t.bot>f.bot+t.h*.5});
+      if(rest.length&&rest[0].top-f.bot<f.h*.9){var r0=rest[0];out+=" "+lineText(rest.filter(function(t){return Math.abs(t.bot-r0.bot)<t.h*.5}))}
+      return out;
+    }
+    var rt=T.filter(function(t){return t.x>=b.x1-5&&t.x<=b.x1+bw*2.5&&t.bot>=b.y0&&t.top<=b.y1});
+    rt.sort(function(p,q){return Math.abs(p.bot-q.bot)>p.h*.5?p.bot-q.bot:p.x-q.x});
+    return rt.map(function(t){return t.s.trim()}).join(" ").replace(/\s+/g," ").trim();
+  }
+  function renderRev(){
+    var g=$("rg");g.innerHTML="";
+    cand.forEach(function(s){
+      var d=document.createElement("div");d.className="st";
+      var im=document.createElement("img");im.src=s.img;
+      var inp=document.createElement("input");inp.type="text";inp.value=s.name;inp.onchange=function(){s.name=inp.value.trim()||s.name};
+      var x=document.createElement("button");x.className="x2";x.textContent="×";x.onclick=function(){cand=cand.filter(function(t){return t.id!==s.id});renderRev()};
+      d.append(im,inp,x);g.appendChild(d);
+    });
+    $("rt").textContent=cand.length+" élève"+(cand.length>1?"s":"")+" détecté"+(cand.length>1?"s":"");
+    $("rev").classList.toggle("hide",!cand.length);
+  }
+  $("rok").onclick=function(){S=S.concat(cand);var n=cand.length;cand=[];save();renderRev();renderList();$("pst").textContent=n+" élève"+(n>1?"s ajoutés":" ajouté")+" à la liste."};
+  $("rno").onclick=function(){cand=[];renderRev();$("pst").textContent=""};
+  $("pdf").onchange=async function(e){
+    var file=e.target.files[0];if(!file)return;
+    var st=$("pst");cand=[];renderRev();st.textContent="Chargement du lecteur PDF…";
+    try{
+      var lib=await pdfLib(),U=lib.Util,OPS=lib.OPS;
+      var doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;
+      for(var p=1;p<=doc.numPages;p++){
+        st.textContent="Analyse de la page "+p+" / "+doc.numPages+"…";
+        var page=await doc.getPage(p),vp=page.getViewport({scale:2});
+        var cv=document.createElement("canvas");cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
+        await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+        var ops=await page.getOperatorList(),tc=await page.getTextContent();
+        var T=tc.items.filter(function(it){return it.str&&it.str.trim()}).map(function(it){
+          var q=U.applyTransform([it.transform[4],it.transform[5]],vp.transform),h=(it.height||Math.abs(it.transform[3]))*vp.scale;
+          return {s:it.str,x:q[0],w:it.width*vp.scale,h:h,top:q[1]-h,bot:q[1]};
+        });
+        var B=boxes(ops,vp,U,OPS).filter(function(b){
+          var w=b.x1-b.x0,h=b.y1-b.y0,r=w/h;
+          return w>=60&&h>=60&&r>.4&&r<2.5&&!(w>vp.width*.8&&h>vp.height*.8);
+        });
+        var uniq=[];B.forEach(function(b){if(!uniq.some(function(c){return Math.abs(c.x0-b.x0)<5&&Math.abs(c.y0-b.y0)<5}))uniq.push(b)});
+        uniq.sort(function(a,b){return Math.abs(a.y0-b.y0)>30?a.y0-b.y0:a.x0-b.x0});
+        uniq.forEach(function(b){
+          var x=Math.max(0,Math.floor(b.x0)),y=Math.max(0,Math.floor(b.y0)),w=Math.min(cv.width,Math.ceil(b.x1))-x,h=Math.min(cv.height,Math.ceil(b.y1))-y;
+          if(w<10||h<10)return;
+          var c2=document.createElement("canvas"),r=Math.min(1,320/Math.max(w,h));
+          c2.width=Math.round(w*r);c2.height=Math.round(h*r);
+          c2.getContext("2d").drawImage(cv,x,y,w,h,0,0,c2.width,c2.height);
+          cand.push({id:uid(),name:nameFor(b,T)||"Élève "+(cand.length+1),img:c2.toDataURL("image/jpeg",.82),ok:0,ko:0});
+        });
+      }
+      e.target.value="";
+      st.textContent=cand.length?"Vérifiez la liste ci-dessous.":"Aucune photo détectée dans ce PDF. S’il s’agit d’un scan, exportez les photos en images et utilisez l’import de photos.";
+      renderRev();
+    }catch(err){st.textContent="Impossible de lire ce PDF."}
+  };
+
+  $("files").onchange=async function(e){
+    for(var f of e.target.files){try{S.push({id:uid(),name:nameOf(f),img:await resize(f),ok:0,ko:0})}catch(_){}}
+    e.target.value="";save();renderList();
+  };
+  $("add").onclick=async function(){
+    var n=$("nm").value.trim(),f=$("ph").files[0];
+    if(!n||!f){alert("Indiquez un nom et choisissez une photo.");return}
+    try{S.push({id:uid(),name:n,img:await resize(f),ok:0,ko:0})}catch(_){return}
+    $("nm").value="";$("ph").value="";save();renderList();
+  };
+  $("clear").onclick=function(){if(S.length&&confirm("Supprimer tous les élèves ?")){S=[];save();renderList()}};
+
+  function pick(){
+    var pool=S.filter(function(s){return s.id!==last}),w=pool.map(function(s){return Math.max(.3,1+s.ko-s.ok*.3)});
+    var t=w.reduce(function(a,b){return a+b},0)*Math.random();
+    for(var i=0;i<pool.length;i++){t-=w[i];if(t<=0)return pool[i]}
+    return pool[pool.length-1];
+  }
+  function question(){
+    var box=$("qBox");$("msg").textContent="";$("next").hidden=true;
+    if(S.length<3){box.innerHTML='<p class="mut" style="text-align:center">Ajoutez au moins 3 élèves dans l’onglet « Élèves » pour lancer le quiz.</p>';return}
+    cur=pick();last=cur.id;
+    var others=S.filter(function(s){return s.id!==cur.id}).sort(function(){return Math.random()-.5}).slice(0,2);
+    var opts=others.concat(cur).sort(function(){return Math.random()-.5});
+    box.innerHTML="";
+    var im=document.createElement("img");im.className="photo";im.src=cur.img;im.alt="Qui est-ce ?";
+    var ch=document.createElement("div");ch.className="choices";
+    opts.forEach(function(o){
+      var b=document.createElement("button");b.textContent=o.name;
+      b.onclick=function(){answer(o,ch,b)};ch.appendChild(b);
+    });
+    box.append(im,ch);
+  }
+  function answer(o,ch,b){
+    var good=o.id===cur.id;
+    if(good){cur.ok++;sc.ok++;b.classList.add("ok");$("msg").textContent="Bravo ! 🎉"}
+    else{cur.ko++;sc.ko++;b.classList.add("ko");
+      Array.from(ch.children).forEach(function(x){if(x.textContent===cur.name)x.classList.add("ok")});
+      $("msg").textContent="C’était "+cur.name}
+    Array.from(ch.children).forEach(function(x){x.disabled=true});
+    $("sOk").textContent=sc.ok;$("sKo").textContent=sc.ko;
+    save();$("next").hidden=false;
+  }
+  $("next").onclick=question;
+
+  function show(q){
+    $("vL").classList.toggle("hide",q);$("vQ").classList.toggle("hide",!q);
+    $("tabL").classList.toggle("on",!q);$("tabQ").classList.toggle("on",q);
+    if(q)question();else renderList();
+  }
+  $("tabL").onclick=function(){show(false)};
+  $("tabQ").onclick=function(){show(true)};
+
+  function setTimer(){
+    clearInterval(timer);
+    if(!$("auto").checked)return;
+    timer=setInterval(function(){
+      if(S.length<3)return;
+      show(true);var t=$("toast");t.style.display="block";setTimeout(function(){t.style.display="none"},3000);
+    },parseInt($("iv").value,10)*60000);
+  }
+  $("auto").onchange=setTimer;$("iv").onchange=setTimer;
+
+  load();renderList();
+  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){});
+})();
+</script>
+</body>
+</html>

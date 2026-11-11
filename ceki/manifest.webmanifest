@@ -1,0 +1,15 @@
+{
+  "name": "Qui est-ce ?",
+  "short_name": "Qui est-ce",
+  "description": "Apprenez les noms de vos élèves grâce à leurs photos.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f5f1",
+  "theme_color": "#3d5afe",
+  "lang": "fr",
+  "icons": [
+    {"src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
